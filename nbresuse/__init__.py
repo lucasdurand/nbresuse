@@ -6,17 +6,19 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join
 from notebook.base.handlers import IPythonHandler
 
-
 class MetricsHandler(IPythonHandler):
     def get(self):
         """
         Calculate and return current resource usage metrics
         """
+        kernel = self.get_argument('kernel',None)
         config = self.settings['nbresuse_display_config']
         cur_process = psutil.Process()
         all_processes = [cur_process] + cur_process.children(recursive=True)
         rss = sum([p.memory_info().rss for p in all_processes])
 
+        this_one = list(filter(lambda x: self.get_kernel(x.as_dict()['cmdline'][-1]) == kernel,all_processes))
+        this_rss = this_one[0].memory_info().rss if this_one else "??"
         limits = {}
 
         if config.mem_limit != 0:
@@ -28,8 +30,15 @@ class MetricsHandler(IPythonHandler):
         metrics = {
             'rss': rss,
             'limits': limits,
+            'rss_this_one': this_rss,
+            'kernel': kernel
         }
         self.write(json.dumps(metrics))
+
+
+    def get_kernel(self, cmd):
+        kernel_file = os.path.split(cmd)[-1]
+        return kernel_file.replace('kernel-','').replace('.json','')
 
 
 def _jupyter_server_extension_paths():
