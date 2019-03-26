@@ -42,8 +42,9 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
     var displayMetrics = function() {
 
         $.getJSON(utils.get_body_data('baseUrl') + 'api/sessions', function(data) {
-            var session = data.filter((item) => {return item['path']===window.location.pathname.replace('/notebooks/','')});
-            var kernel = session[0]['kernel']['id']
+            var notebook_name = window.location.pathname.split('/notebooks/')[1];
+            var session = data.filter((item) => {return item['path']===notebook_name});
+            var kernel = session[0]['kernel']['id'];
             //now get the usage info for this kernel and total
             $.getJSON(utils.get_body_data('baseUrl') + 'metrics?kernel=' + kernel, function(data) {
                 // FIXME: Proper setups for MB and GB. MB should have 0 things
