@@ -42,7 +42,7 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
     var displayMetrics = function() {
 
         $.getJSON(utils.get_body_data('baseUrl') + 'api/sessions', function(data) {
-            var notebook_name = window.location.pathname.split('/notebooks/')[1];
+            var notebook_name = decodeURI(window.location.pathname).split('/notebooks/')[1];
             var session = data.filter((item) => {return item['path']===notebook_name});
             var kernel = session[0]['kernel']['id'];
             //now get the usage info for this kernel and total
