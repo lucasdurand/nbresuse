@@ -29,13 +29,36 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                            .attr('title', 'Actively used Memory in this Notebook (updates every 5s)')
             )
         );
-        // FIXME: Do something cleaner to get styles in here?
-        $('head').append(
-            $('<style>').html('.nbresuse-warn { background-color: #FFD2D2; color: #D8000C; }')
+
+        $('#maintoolbar-container').append(
+            $('<div>').attr('id', 'nbresuse-display-disk')
+                      .addClass('btn-group')
+                      .addClass('pull-right')
+            .append(
+                $('<strong>').text('Disk: ')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-disk')
+                           .attr('title', 'Disk usage in Notebook (updates every 5s)')
+            )
         );
         $('head').append(
-            $('<style>').html('#nbresuse-display { padding: 2px 8px; }')
+            $('<style>').html('#nbresuse-display-disk { padding: 2px 8px; }')
         );
+        $('#maintoolbar-container').append(
+            $('<div>').attr('id', 'nbresuse-display-hdfs')
+                      .addClass('btn-group')
+                      .addClass('pull-right')
+            .append(
+                $('<strong>').text('HDFS: ')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-hdfs')
+                           .attr('title', 'Storage usage in HDFS (updates every 5s)')
+            )
+        );
+        $('head').append(
+            $('<style>').html('#nbresuse-display-hdfs { padding: 2px 8px; }')
+        );
+
 
     }
 
@@ -51,6 +74,8 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                 // after the ., but GB should have 2.
                 var display = Math.round(data['rss'] / (1024 * 1024));
                 var display_notebook = Math.round(data['rss_this_one'] / (1024 * 1024));
+                var display_disk = Math.round(data['disk'] / (1024 * 1024));
+                var display_hdfs = Math.round(data['hdfs'] / (1024 * 1024));
 
                 var limits = data['limits'];
                 if ('memory' in limits) {
@@ -63,10 +88,30 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                         $('#nbresuse-display').removeClass('nbresuse-warn');
                     }
                 }
-                if (data['limits']['memory'] !== null) {
+                if ('disk' in limits) {
+                    if ('disk' in limits['disk']) {
+                        display_disk += " / " + (limits['disk']['disk'] / (1024 * 1024));
+                    }
+                    if (limits['disk']['warn']) {
+                        $('#nbresuse-display-disk').addClass('nbresuse-warn');
+                    } else {
+                        $('#nbresuse-display-disk').removeClass('nbresuse-warn');
+                    }
+                }
+                if ('hdfs' in limits) {
+                    if ('hdfs' in limits['hdfs']) {
+                        display_hdfs += " / " + (limits['hdfs']['hdfs'] / (1024 * 1024));
+                    }
+                    if (limits['hdfs']['warn']) {
+                        $('#nbresuse-display-hdfs').addClass('nbresuse-warn');
+                    } else {
+                        $('#nbresuse-display-hdfs').removeClass('nbresuse-warn');
+                    }
                 }
                 $('#nbresuse-mem').text(display + ' MB');
                 $('#nbresuse-mem-notebook').text(display_notebook + ' MB');
+                $('#nbresuse-disk').text(display_disk + ' MB');
+                $('#nbresuse-hdfs').text(display_hdfs + ' MB');
             });
         });
 

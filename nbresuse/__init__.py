@@ -6,6 +6,11 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join
 from notebook.base.handlers import IPythonHandler
 
+import subprocess
+import hdfs
+import pandas as pd
+from io import BytesIO
+
 class MetricsHandler(IPythonHandler):
     def get(self):
         """
@@ -21,17 +26,52 @@ class MetricsHandler(IPythonHandler):
         this_rss = this_one[0].memory_info().rss if this_one else "??"
         limits = {}
 
+        # for linux, try and get home drive usage (particularly useful for JupyterHub)
+        home = os.path.expanduser('~/') #or use os.environ['HOME'] ?
+        du = subprocess.Popen(f'du -s {home}',stdout=subprocess.PIPE, shell=True).communicate()
+        try:
+            disk = pd.read_csv(BytesIO(du[0]),sep='\t', names=['used','user'])
+            disk_used = disk['used'][0]*1024 #initially in MB
+        except:
+            disk_used = 8e10
+
+        # HDFS limits
+        hdfs_used = 0
+        if config.hdfs_url:
+            try:
+                client = hdfs.InsecureClient(config.hdfs_url, user=config.hdfs_user)
+                content = client.content(os.path.join(config.hdfs_path,config.user))
+                hdfs_used = content['length'] / 1000
+            except:
+                pass
+
         if config.mem_limit != 0:
             limits['memory'] = {
                 'rss': config.mem_limit
             }
             if config.mem_warning_threshold != 0:
                 limits['memory']['warn'] = (config.mem_limit - rss) < (config.mem_limit * config.mem_warning_threshold)
+
+        if config.disk_limit != 0:
+            limits['disk'] = {
+                'disk': config.disk_limit,
+            }
+            if config.disk_warning_threshold != 0:
+                limits['disk']['warn'] = (config.disk_limit - disk_used) < (config.disk_limit * config.disk_warning_threshold)                
+
+        if config.hdfs_limit != 0:
+            limits['hdfs'] = {
+                'hdfs': config.hdfs_limit,
+                'warn': 0.9*config.hdfs_limit < hdfs_used
+            }
+
         metrics = {
             'rss': rss,
             'limits': limits,
             'rss_this_one': this_rss,
-            'kernel': kernel
+            'kernel': kernel,
+            'disk': disk_used,
+            'hdfs': hdfs_used
         }
         self.write(json.dumps(metrics))
 
@@ -79,6 +119,15 @@ class ResourceUseDisplay(Configurable):
         config=True
     )
 
+    disk_warning_threshold = Float(
+        0,
+        help="""
+        Warn user with flashing lights when disk usage is within this fraction
+        memory limit.
+        """,
+        config=True
+    )
+
     mem_limit = Int(
         0,
         config=True,
@@ -92,9 +141,47 @@ class ResourceUseDisplay(Configurable):
         """
     )
 
+    disk_limit = Int(
+        0,
+        config=True,
+        help="""
+        Disk space limit to display to the user, in bytes.
+
+        Defaults to reading from the `DISK_LIMIT` environment variable. If
+        set to 0, no limit is displayed.
+        """
+    )
+
+    hdfs_limit = Int(
+        0,
+        config=True,
+        help="""
+        HDFS space limit to display to the user, in bytes.
+
+        Defaults to reading from the `HDFS_LIMIT` environment variable. If
+        set to 0, no limit is displayed.
+        """
+    )
+
+    @default('hdfs_limit')
+    def _hdfs_limit_default(self):
+        return int(os.environ.get('HDFS_LIMIT', 0))
+
+    hdfs_path = os.environ.get('HDFS_PATH', '')
+
+    hdfs_user = os.environ.get('HDFS_USER', '')
+
+    hdfs_url = os.environ.get('HDFS_URL', '')
+
     @default('mem_limit')
     def _mem_limit_default(self):
         return int(os.environ.get('MEM_LIMIT', 0))
+
+    @default('disk_limit')
+    def _disk_limit_default(self):
+        return int(os.environ.get('DISK_LIMIT', 0))
+
+    user = os.environ.get('USER','')
 
 def load_jupyter_server_extension(nbapp):
     """
