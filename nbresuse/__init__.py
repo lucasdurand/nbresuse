@@ -31,7 +31,7 @@ class MetricsHandler(IPythonHandler):
         du = subprocess.Popen(f'du -s {home}',stdout=subprocess.PIPE, shell=True).communicate()
         try:
             disk = pd.read_csv(BytesIO(du[0]),sep='\t', names=['used','user'])
-            disk_used = disk['used'][0]*1024 #initially in MB
+            disk_used = int(disk['used'][0]*1024) #initially in MB
         except:
             disk_used = 8e10
 
