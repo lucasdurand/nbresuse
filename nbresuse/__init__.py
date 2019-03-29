@@ -127,7 +127,7 @@ class ResourceUseDisplay(Configurable):
     )
 
     disk_warning_threshold = Float(
-        0,
+        0.1,
         help="""
         Warn user with flashing lights when disk usage is within this fraction
         memory limit.
