@@ -38,19 +38,16 @@ class MetricsHandler(IPythonHandler):
         # HDFS limits
         hdfs_used = 0
         if config.hdfs_url:
-            try:
-                # hdfs client produces a lot of logs, divert stdout for a minute
-                oldstdout = sys.stdout
-                sys.stdout = None
-                
-                client = hdfs.InsecureClient(config.hdfs_url, user=config.hdfs_user)
-                content = client.content(os.path.join(config.hdfs_path,config.user))
-                # return stdout
-                sys.stdout = oldstdout
+            # hdfs client produces a lot of logs, divert stdout for a minute
+            oldstdout = sys.stdout
+            sys.stdout = None
+            
+            client = hdfs.InsecureClient(config.hdfs_url, user=config.hdfs_user)
+            content = client.content(os.path.join(config.hdfs_path,config.user))
+            # return stdout
+            sys.stdout = oldstdout
 
-                hdfs_used = content['length'] / 1000
-            except:
-                pass
+            hdfs_used = content['length']
 
         if config.mem_limit != 0:
             limits['memory'] = {
