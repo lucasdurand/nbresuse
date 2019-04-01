@@ -72,15 +72,15 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
             $.getJSON(utils.get_body_data('baseUrl') + 'metrics?kernel=' + kernel, function(data) {
                 // FIXME: Proper setups for MB and GB. MB should have 0 things
                 // after the ., but GB should have 2.
-                var display = Math.round(data['rss'] / (1024 * 1024));
-                var display_notebook = Math.round(data['rss_this_one'] / (1024 * 1024));
-                var display_disk = Math.round(data['disk'] / (1024 * 1024));
-                var display_hdfs = Math.round(data['hdfs'] / (1024 * 1024));
+                var display = Math.round(data['rss'] / (1024 * 1024 * 1024));
+                var display_notebook = Math.round(data['rss_this_one'] / (1024 * 1024 * 1024));
+                var display_disk = Math.round(data['disk'] / (1024 * 1024 * 1024));
+                var display_hdfs = Math.round(data['hdfs'] / (1024 * 1024 * 1024));
 
                 var limits = data['limits'];
                 if ('memory' in limits) {
                     if ('rss' in limits['memory']) {
-                        display += " / " + (limits['memory']['rss'] / (1024 * 1024));
+                        display += " / " + (limits['memory']['rss'] / (1024 * 1024 * 1024));
                     }
                     if (limits['memory']['warn']) {
                         $('#nbresuse-display').addClass('nbresuse-warn');
@@ -90,7 +90,7 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                 }
                 if ('disk' in limits) {
                     if ('disk' in limits['disk']) {
-                        display_disk += " / " + (limits['disk']['disk'] / (1024 * 1024));
+                        display_disk += " / " + (limits['disk']['disk'] / (1024 * 1024 * 1024));
                     }
                     if (limits['disk']['warn']) {
                         $('#nbresuse-display-disk').addClass('nbresuse-warn');
@@ -100,7 +100,7 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                 }
                 if ('hdfs' in limits) {
                     if ('hdfs' in limits['hdfs']) {
-                        display_hdfs += " / " + (limits['hdfs']['hdfs'] / (1024 * 1024));
+                        display_hdfs += " / " + (limits['hdfs']['hdfs'] / (1024 * 1024 * 1024));
                     }
                     if (limits['hdfs']['warn']) {
                         $('#nbresuse-display-hdfs').addClass('nbresuse-warn');
