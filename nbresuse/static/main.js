@@ -72,10 +72,10 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
             $.getJSON(utils.get_body_data('baseUrl') + 'metrics?kernel=' + kernel, function(data) {
                 // FIXME: Proper setups for MB and GB. MB should have 0 things
                 // after the ., but GB should have 2.
-                var display = Math.round(data['rss'] / (1024 * 1024 * 1024));
-                var display_notebook = Math.round(data['rss_this_one'] / (1024 * 1024 * 1024));
-                var display_disk = Math.round(data['disk'] / (1024 * 1024 * 1024));
-                var display_hdfs = Math.round(data['hdfs'] / (1024 * 1024 * 1024));
+                var display = (data['rss'] / (1024 * 1024 * 1024)).toFixed(2);
+                var display_notebook = (data['rss_this_one'] / (1024 * 1024 * 1024)).toFixed(2);
+                var display_disk = (data['disk'] / (1024 * 1024 * 1024)).toFixed(2);
+                var display_hdfs = (data['hdfs'] / (1024 * 1024 * 1024)).toFixed(2);
 
                 var limits = data['limits'];
                 if ('memory' in limits) {
@@ -108,10 +108,10 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                         $('#nbresuse-display-hdfs').removeClass('nbresuse-warn');
                     }
                 }
-                $('#nbresuse-mem').text(display + ' MB');
-                $('#nbresuse-mem-notebook').text(display_notebook + ' MB');
-                $('#nbresuse-disk').text(display_disk + ' MB');
-                $('#nbresuse-hdfs').text(display_hdfs + ' MB');
+                $('#nbresuse-mem').text(display + ' GB');
+                $('#nbresuse-mem-notebook').text(display_notebook + ' GB');
+                $('#nbresuse-disk').text(display_disk + ' GB');
+                $('#nbresuse-hdfs').text(display_hdfs + ' GB');
             });
         });
 

@@ -42,7 +42,10 @@ class MetricsHandler(IPythonHandler):
             sys.stdout = None
             
             client = hdfs.InsecureClient(config.hdfs_url, user=config.hdfs_user)
-            content = client.content(os.path.join(config.hdfs_path,config.user))
+            try:
+                content = client.content(os.path.join(config.hdfs_path,config.user))
+            except hdfs.HdfsError: #no 
+                content = {'length':0}
             # return stdout
             sys.stdout = oldstdout
 
