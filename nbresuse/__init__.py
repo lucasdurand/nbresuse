@@ -22,9 +22,8 @@ class MetricsHandler(IPythonHandler):
         all_processes = [cur_process] + cur_process.children(recursive=True)
         rss = sum([p.memory_info().rss for p in all_processes])
 
-        this_one = list(filter(lambda x: self.get_kernel(x.as_dict()['cmdline'][-1]) == kernel,all_processes))
+        this_one = list(filter(lambda x: self.get_kernel(x.as_dict()['cmdline']) == kernel,all_processes))
         this_rss = this_one[0].memory_info().rss if this_one else "??"
-        limits = {}
 
         # for linux, try and get home drive usage (particularly useful for JupyterHub)
         home = os.path.expanduser('~/') #or use os.environ['HOME'] ?
@@ -48,6 +47,8 @@ class MetricsHandler(IPythonHandler):
             sys.stdout = oldstdout
 
             hdfs_used = content['length']
+
+        limits = {}
 
         if config.mem_limit != 0:
             limits['memory'] = {
@@ -81,6 +82,7 @@ class MetricsHandler(IPythonHandler):
 
 
     def get_kernel(self, cmd):
+        cmd = cmd[-2] if '--profile' in cmd[-1] else cmd[-1]
         kernel_file = os.path.split(cmd)[-1]
         return kernel_file.replace('kernel-','').replace('.json','')
 
