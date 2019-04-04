@@ -27,7 +27,10 @@ class MetricsHandler(IPythonHandler):
         this_rss = this_one[0].memory_info().rss if this_one else "??"
         
         # CPU - waiting causes problems, so let's only check the total cpu
-        cpu = sum([p.cpu_percent(interval=0.1) for p in all_processes]) #*len(p.cpu_affinity())
+        try:
+            cpu = sum([p.cpu_percent(interval=0.1) for p in all_processes]) #*len(p.cpu_affinity())
+        except ProcessLookupError:
+            cpu = 0
         #this_cpu = this_one[0].cpu_percent(interval=0.01)/len(this_one[0].cpu_affinity()) if this_one else "??"
         
         # DISK -- for linux, try and get home drive usage (particularly useful for JupyterHub)
