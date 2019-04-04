@@ -28,7 +28,8 @@ class MetricsHandler(IPythonHandler):
         
         # CPU - waiting causes problems, so let's only check the total cpu
         try:
-            cpu = sum([p.cpu_percent(interval=0.1) for p in all_processes]) #*len(p.cpu_affinity())
+            dummy = [p.cpu_percent(interval=None) for p in all_processes] #need cpu times to compare to
+            cpu = sum([p.cpu_percent(interval=None) for p in all_processes]) #*len(p.cpu_affinity())
         except ProcessLookupError:
             cpu = 0
         #this_cpu = this_one[0].cpu_percent(interval=0.01)/len(this_one[0].cpu_affinity()) if this_one else "??"
