@@ -6,26 +6,26 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
         )
 
 
-        $('#maintoolbar-container').append(
-            $('<div>').attr('id', 'nbresuse-display-cpu')
-                      .addClass('btn-group')
-                      .addClass('pull-right')
-            .append(
-                $('<strong>').text('Total (cpu): ')
-            ).append(
-                $('<span>').attr('id', 'nbresuse-cpu')
-                           .attr('title', 'Actively used CPU cores across all Notebooks (updates every 5s)')
-            ).append(
-                $('<i>').addClass('far')
-            )
-        );
-        // FIXME: Do something cleaner to get styles in here?
-        $('head').append(
-            $('<style>').html('.nbresuse-warn { background-color: #FFD2D2; color: #D8000C; }')
-        );
-        $('head').append(
-            $('<style>').html('#nbresuse-display-cpu { padding: 2px 8px; }')
-        );
+        // $('#maintoolbar-container').append(
+        //     $('<div>').attr('id', 'nbresuse-display-cpu')
+        //               .addClass('btn-group')
+        //               .addClass('pull-right')
+        //     .append(
+        //         $('<strong>').text('Total (cpu): ')
+        //     ).append(
+        //         $('<span>').attr('id', 'nbresuse-cpu')
+        //                    .attr('title', 'Actively used CPU cores across all Notebooks (updates every 5s)')
+        //     ).append(
+        //         $('<i>').addClass('far')
+        //     )
+        // );
+        // // FIXME: Do something cleaner to get styles in here?
+        // $('head').append(
+        //     $('<style>').html('.nbresuse-warn { background-color: #FFD2D2; color: #D8000C; }')
+        // );
+        // $('head').append(
+        //     $('<style>').html('#nbresuse-display-cpu { padding: 2px 8px; }')
+        // );
 
         $('#maintoolbar-container').append(
             $('<div>').attr('id', 'nbresuse-display')
@@ -109,25 +109,25 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                 var display_notebook = (data['rss_this_one'] / (1024 * 1024 * 1024)).toFixed(2);
                 var display_disk = (data['disk'] / (1024 * 1024 * 1024)).toFixed(2);
                 var display_hdfs = (data['hdfs'] / (1024 * 1024 * 1024)).toFixed(2);
-                var display_cpu = (data['cpu']).toFixed(2);
+                //var display_cpu = (data['cpu']).toFixed(2);
                 //var display_notebook_cpu = (data['cpu_this_one']).toFixed(2);
 
                 var limits = data['limits'];
 
-                if ('cpu' in limits) {
-                    if ('cpu' in limits['cpu']) {
-                        display_cpu += " / " + (limits['cpu']['cpu']);
-                    }
-                    if (limits['cpu']['warn']) {
-                        $('#nbresuse-display-cpu').addClass('nbresuse-warn');
-                        $('#nbresuse-display-cpu i').removeClass('fa-grin-beam');
-                        $('#nbresuse-display-cpu i').addClass('fa-angry');
-                    } else {
-                        $('#nbresuse-display-cpu').removeClass('nbresuse-warn');
-                        $('#nbresuse-display-cpu i').removeClass('fa-angry');
-                        $('#nbresuse-display-cpu i').addClass('fa-grin-beam');
-                    }
-                }
+                // if ('cpu' in limits) {
+                //     if ('cpu' in limits['cpu']) {
+                //         display_cpu += " / " + (limits['cpu']['cpu']);
+                //     }
+                //     if (limits['cpu']['warn']) {
+                //         $('#nbresuse-display-cpu').addClass('nbresuse-warn');
+                //         $('#nbresuse-display-cpu i').removeClass('fa-grin-beam');
+                //         $('#nbresuse-display-cpu i').addClass('fa-angry');
+                //     } else {
+                //         $('#nbresuse-display-cpu').removeClass('nbresuse-warn');
+                //         $('#nbresuse-display-cpu i').removeClass('fa-angry');
+                //         $('#nbresuse-display-cpu i').addClass('fa-grin-beam');
+                //     }
+                // }
 
                 if ('memory' in limits) {
                     if ('rss' in limits['memory']) {
@@ -173,7 +173,7 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
                         $('#nbresuse-display-hdfs i').addClass('fa-grin-beam');
                     }
                 }
-                $('#nbresuse-cpu').text(display_cpu + '%');
+                //$('#nbresuse-cpu').text(display_cpu + '%');
                 //$('#nbresuse-cpu-notebook').text(display_notebook_cpu + ' %');
                 $('#nbresuse-mem').text(display + ' GB');
                 $('#nbresuse-mem-notebook').text(display_notebook + ' GB');

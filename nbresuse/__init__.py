@@ -26,11 +26,11 @@ class MetricsHandler(IPythonHandler):
         rss = sum([p.memory_info().rss for p in all_processes])
         this_rss = this_one[0].memory_info().rss if this_one else "??"
         
-        # CPU - waiting causes problems, so let's only check the total cpu
-        try:
-            cpu = sum([p.cpu_percent(interval=0.1) for p in all_processes]) #*len(p.cpu_affinity())
-        except ProcessLookupError:
-            cpu = 0
+        # CPU - waiting causes problems, open enough notebooks and this will lock the cpu, we should transition to pulling from Prometheus server
+        #try:
+        #    cpu = sum([p.cpu_percent(interval=0.1) for p in all_processes]) #*len(p.cpu_affinity())
+        #except ProcessLookupError:
+        #    cpu = 0
         #this_cpu = this_one[0].cpu_percent(interval=0.01)/len(this_one[0].cpu_affinity()) if this_one else "??"
         
         # DISK -- for linux, try and get home drive usage (particularly useful for JupyterHub)
@@ -80,12 +80,12 @@ class MetricsHandler(IPythonHandler):
                 'warn': 0.9*config.hdfs_limit < hdfs_used
             }
 
-        if config.cpu_limit != 0:
-            limits['cpu'] = {
-                'cpu': config.cpu_limit,
-            }
-            if config.cpu_warning_threshold != 0:
-                limits['cpu']['warn'] = (config.cpu_limit - cpu) < (config.cpu_limit * config.cpu_warning_threshold)                
+        #if config.cpu_limit != 0:
+        #    limits['cpu'] = {
+        #        'cpu': config.cpu_limit,
+        #    }
+        #    if config.cpu_warning_threshold != 0:
+        #        limits['cpu']['warn'] = (config.cpu_limit - cpu) < (config.cpu_limit * config.cpu_warning_threshold)                
 
         metrics = {
             'rss': rss,
@@ -94,7 +94,7 @@ class MetricsHandler(IPythonHandler):
             'kernel': kernel,
             'disk': disk_used,
             'hdfs': hdfs_used,
-            'cpu': cpu,
+            #'cpu': cpu,
             #'cpu_this_one':this_cpu
         }
         self.write(json.dumps(metrics))
