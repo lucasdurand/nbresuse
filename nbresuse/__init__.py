@@ -20,7 +20,10 @@ class MetricsHandler(IPythonHandler):
         config = self.settings['nbresuse_display_config']
         cur_process = psutil.Process()
         all_processes = [cur_process] + cur_process.children(recursive=True)
-        this_one = list(filter(lambda x: self.get_kernel(x.cmdline()) == kernel,all_processes))
+        try:
+            this_one = list(filter(lambda x: self.get_kernel(x.cmdline()) == kernel,all_processes))
+        except: # ... weird process spawned?
+            this_one = []
         
         # MEM
         rss = sum([p.memory_info().rss for p in all_processes])
