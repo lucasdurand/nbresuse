@@ -96,6 +96,10 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
     }
 
     var displayMetrics = function() {
+        if (document.hidden) {
+            // Don't poll when nobody is looking
+            return;
+        }
 
         $.getJSON(utils.get_body_data('baseUrl') + 'api/sessions', function(data) {
             var notebook_name = decodeURI(window.location.pathname).split('/notebooks/')[1];
@@ -189,6 +193,14 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
         displayMetrics();
         // Update every five seconds, eh?
         setInterval(displayMetrics, 1000 * 5);
+
+        document.addEventListener("visibilitychange", function() {
+            // Update instantly when user activates notebook tab
+            // FIXME: Turn off update timer completely when tab not in focus
+            if (!document.hidden) {
+                displayMetrics();
+            }
+        }, false);
     };
 
     return {
