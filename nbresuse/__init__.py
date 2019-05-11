@@ -14,18 +14,14 @@ from io import BytesIO
 # Are we also updating Prometheus gauges in another module (jupyterhub-side?)
 prometheus = os.environ.get('NBRESUSE_PROMETHEUS', None)
 if prometheus:
-    def import_existing_prometheus_metric(variable,module=prometheus):
+    for metric in ["MEM","DISK","HDFS"]
         try:
-            exec(f"from {module} import {variable}")
+            exec(f"from {prometheus} import {metric}")
         except ValueError as e:
             if 'Duplicated' in str(e):
                 print(f"Imported already-instantiated Prometheus metric {variable} from {module}")
             else:
                 raise e
-
-    import_existing_prometheus_metric('MEM')
-    import_existing_prometheus_metric('DISK')
-    import_existing_prometheus_metric('HDFS')
 
 class MetricsHandler(IPythonHandler):
     def get(self):
@@ -44,7 +40,7 @@ class MetricsHandler(IPythonHandler):
         # MEM
         rss = sum([p.memory_info().rss for p in all_processes])
         if prometheus:
-            MEM.label(config.user).set(rss)
+            MEM.labels(config.user).set(rss)
 
         this_rss = this_one[0].memory_info().rss if this_one else "??"
         
@@ -64,7 +60,7 @@ class MetricsHandler(IPythonHandler):
         except:
             disk_used = -1
         if prometheus:
-            DISK.label(config.user).set(disk_used)
+            DISK.labels(config.user).set(disk_used)
 
         # HDFS limits
         hdfs_used = 0
@@ -83,7 +79,7 @@ class MetricsHandler(IPythonHandler):
 
             hdfs_used = content['length']
         if prometheus:
-            HDFS.label(config.user).set(hdfs_used)
+            HDFS.labels(config.user).set(hdfs_used)
 
         limits = {}
         if config.mem_limit != 0:
