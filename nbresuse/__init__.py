@@ -14,7 +14,7 @@ from io import BytesIO
 # Are we also updating Prometheus gauges in another module (jupyterhub-side?)
 prometheus = os.environ.get('NBRESUSE_PROMETHEUS', None)
 if prometheus:
-    for metric in ["MEM","DISK","HDFS"]
+    for metric in ["MEM","DISK","HDFS"]:
         try:
             exec(f"from {prometheus} import {metric}")
         except ValueError as e:
