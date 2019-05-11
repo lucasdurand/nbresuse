@@ -11,6 +11,22 @@ import hdfs
 import pandas as pd
 from io import BytesIO
 
+# Are we also updating Prometheus gauges in another module (jupyterhub-side?)
+prometheus = os.environ.get('NBRESUSE_PROMETHEUS', None)
+if prometheus:
+    def import_existing_prometheus_metric(variable,module=prometheus):
+        try:
+            exec(f"from {module} import {variable}")
+        except ValueError as e:
+            if 'Duplicated' in str(e):
+                print(f"Imported already-instantiated Prometheus metric {variable} from {module}")
+            else:
+                raise e
+
+    import_existing_prometheus_metric('MEM')
+    import_existing_prometheus_metric('DISK')
+    import_existing_prometheus_metric('HDFS')
+
 class MetricsHandler(IPythonHandler):
     def get(self):
         """
@@ -27,6 +43,9 @@ class MetricsHandler(IPythonHandler):
         
         # MEM
         rss = sum([p.memory_info().rss for p in all_processes])
+        if prometheus:
+            MEM.label(config.user).set(rss)
+
         this_rss = this_one[0].memory_info().rss if this_one else "??"
         
         # CPU - waiting causes problems, open enough notebooks and this will lock the cpu, we should transition to pulling from Prometheus server
@@ -43,7 +62,10 @@ class MetricsHandler(IPythonHandler):
             disk = pd.read_csv(BytesIO(du[0]),sep='\t', names=['used','user'])
             disk_used = int(disk['used'][0]*1024) #initially in MB
         except:
-            disk_used = 8e10
+            disk_used = -1
+        if prometheus:
+            DISK.label(config.user).set(disk_used)
+
         # HDFS limits
         hdfs_used = 0
         if config.hdfs_url:
@@ -60,9 +82,10 @@ class MetricsHandler(IPythonHandler):
             sys.stdout = oldstdout
 
             hdfs_used = content['length']
+        if prometheus:
+            HDFS.label(config.user).set(hdfs_used)
 
         limits = {}
-
         if config.mem_limit != 0:
             limits['memory'] = {
                 'rss': config.mem_limit

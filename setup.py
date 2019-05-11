@@ -11,6 +11,9 @@ setuptools.setup(
     install_requires=[
         'psutil',
         'notebook',
+        'hdfs',
+        'pandas',
+        'prometheus_client'
     ],
     data_files=[
         ('share/jupyter/nbextensions/nbresuse', glob('nbresuse/static/*')),

@@ -1,5 +1,7 @@
 # nbresuse
 
+> This is becoming a lot more like the native Prometheus metrics in Jupyterhub, should probably fork this again
+
 ![Screenshot with memory limit](screenshot.png)
 
 NB Resource Usage (nbresuse) is a small extension for Jupyter Notebooks that
@@ -9,10 +11,9 @@ main toolbar in the notebook itself, refreshing every 5s.
 
 ## Installation
 
-You can currently install this package from PyPI.
-
+This can be installed from git
 ```bash
-pip install nbresuse
+pip install git+http://github.com/lucasdurand/nbresuse
 ```
 
 **If your notebook version is < 5.3**, you need to enable the extension manually.
@@ -49,5 +50,11 @@ can set the parameter `--ResourceUseDisplay.mem_warning_threshold=0.1`.
 
 ## Resources displayed
 
-Currently it only displays Memory usage (just RSS). Other metrics will be
-added in the future as needed.
+- Total memory usage (just RSS)
+- Single notebook memory usage (just RSS)
+- HDFS disk usage
+- Local disk usage
+
+## Log into Prometheus
+
+Look for existing Prometheus gauges and update when called (particularly useful for Jupyterhub and to reduce the number of calls to count disk space, which is expensive)
