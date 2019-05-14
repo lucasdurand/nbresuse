@@ -11,17 +11,15 @@ import hdfs
 import pandas as pd
 from io import BytesIO
 
-# Are we also updating Prometheus gauges in another module (jupyterhub-side?)
-prometheus = os.environ.get('NBRESUSE_PROMETHEUS', None)
-if prometheus:
-    for metric in ["MEM","DISK","HDFS"]:
-        try:
-            exec(f"from {prometheus} import {metric}")
-        except ValueError as e:
-            if 'Duplicated' in str(e):
-                print(f"Imported already-instantiated Prometheus metric {variable} from {module}")
-            else:
-                raise e
+# Instantiate Prometheus Gauges
+# TODO: This could also be a local Prometheus server, which the browser polls for metrics
+prometheus = pushgateway = os.environ.get('PROMETHEUS_PUSHGATEWAY_URL')
+if pushgateway:
+    from prometheus_client import CollectorRegistry, push_to_gateway, Gauge
+    registry = CollectorRegistry()
+    MEM = Gauge('memory', 'Total Memory in Kernels', labelnames=['user'], registry=registry)
+    DISK = Gauge('disk', 'Total Disk Usage in Jupyter Directory', labelnames=['user'], registry=registry)
+    HDFS = Gauge('hdfs', 'Total HDFS Usage in Userspace', labelnames=['user'], registry=registry)
 
 class MetricsHandler(IPythonHandler):
     def get(self):
@@ -39,18 +37,8 @@ class MetricsHandler(IPythonHandler):
         
         # MEM
         rss = sum([p.memory_info().rss for p in all_processes])
-        if prometheus:
-            MEM.labels(config.user).set(rss)
-
         this_rss = this_one[0].memory_info().rss if this_one else "??"
-        
-        # CPU - waiting causes problems, open enough notebooks and this will lock the cpu, we should transition to pulling from Prometheus server
-        #try:
-        #    cpu = sum([p.cpu_percent(interval=0.1) for p in all_processes]) #*len(p.cpu_affinity())
-        #except ProcessLookupError:
-        #    cpu = 0
-        #this_cpu = this_one[0].cpu_percent(interval=0.01)/len(this_one[0].cpu_affinity()) if this_one else "??"
-        
+                
         # DISK -- for linux, try and get home drive usage (particularly useful for JupyterHub)
         home = os.path.expanduser('~/') #or use os.environ['HOME'] ?
         du = subprocess.Popen(f'du -s {home}',stdout=subprocess.PIPE, shell=True).communicate()
@@ -59,8 +47,7 @@ class MetricsHandler(IPythonHandler):
             disk_used = int(disk['used'][0]*1024) #initially in MB
         except:
             disk_used = -1
-        if prometheus:
-            DISK.labels(config.user).set(disk_used)
+
 
         # HDFS limits
         hdfs_used = 0
@@ -78,8 +65,6 @@ class MetricsHandler(IPythonHandler):
             sys.stdout = oldstdout
 
             hdfs_used = content['length']
-        if prometheus:
-            HDFS.labels(config.user).set(hdfs_used)
 
         limits = {}
         if config.mem_limit != 0:
@@ -102,23 +87,22 @@ class MetricsHandler(IPythonHandler):
                 'warn': 0.9*config.hdfs_limit < hdfs_used
             }
 
-        #if config.cpu_limit != 0:
-        #    limits['cpu'] = {
-        #        'cpu': config.cpu_limit,
-        #    }
-        #    if config.cpu_warning_threshold != 0:
-        #        limits['cpu']['warn'] = (config.cpu_limit - cpu) < (config.cpu_limit * config.cpu_warning_threshold)                
-
         metrics = {
             'rss': rss,
             'limits': limits,
             'rss_this_one': this_rss,
             'kernel': kernel,
             'disk': disk_used,
-            'hdfs': hdfs_used,
-            #'cpu': cpu,
-            #'cpu_this_one':this_cpu
+            'hdfs': hdfs_used
         }
+
+        if prometheus: # update prometheus registry and push to central location (for JupyterHub)
+            MEM.labels(config.user).set(rss)
+            DISK.labels(config.user).set(disk_used)
+            HDFS.labels(config.user).set(hdfs_used)
+            push_to_gateway(pushgateway, job='jupyter-notebook', registry=registry)
+        
+        # return metrics in browser
         self.write(json.dumps(metrics))
 
 
