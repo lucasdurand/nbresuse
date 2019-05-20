@@ -20,7 +20,7 @@ if pushgateway:
     MEM = Gauge('memory', 'Total Memory in Kernels', labelnames=['user'], registry=registry)
     DISK = Gauge('disk', 'Total Disk Usage in Jupyter Directory', labelnames=['user'], registry=registry)
     HDFS = Gauge('hdfs', 'Total HDFS Usage in Userspace', labelnames=['user'], registry=registry)
-    UP = Gauge('nbresuse_up', 'Metrics Service is Up for User', labelnames=['user'], registry=registry)
+    UP = Gauge('up', 'Jupyter server is up for User', labelnames=['user'], registry=registry)
 
 class MetricsHandler(IPythonHandler):
     def get(self):
