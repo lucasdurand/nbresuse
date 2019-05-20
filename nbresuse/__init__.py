@@ -15,7 +15,7 @@ from io import BytesIO
 # TODO: This could also be a local Prometheus server, which the browser polls for metrics
 prometheus = pushgateway = os.environ.get('PROMETHEUS_PUSHGATEWAY_URL')
 if pushgateway:
-    from prometheus_client import CollectorRegistry, pushadd_to_gateway, Gauge
+    from prometheus_client import CollectorRegistry, push_to_gateway, Gauge
     registry = CollectorRegistry()
     MEM = Gauge('memory', 'Total Memory in Kernels', labelnames=['user'], registry=registry)
     DISK = Gauge('disk', 'Total Disk Usage in Jupyter Directory', labelnames=['user'], registry=registry)
@@ -102,7 +102,7 @@ class MetricsHandler(IPythonHandler):
             MEM.labels(config.user).set(rss)
             DISK.labels(config.user).set(disk_used)
             HDFS.labels(config.user).set(hdfs_used)
-            pushadd_to_gateway(pushgateway, job='jupyter-notebook', registry=registry)
+            push_to_gateway(pushgateway, job='jupyter-notebook', registry=registry)
         
         # return metrics in browser
         self.write(json.dumps(metrics))
