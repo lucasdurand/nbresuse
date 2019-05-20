@@ -20,6 +20,7 @@ if pushgateway:
     MEM = Gauge('memory', 'Total Memory in Kernels', labelnames=['user'], registry=registry)
     DISK = Gauge('disk', 'Total Disk Usage in Jupyter Directory', labelnames=['user'], registry=registry)
     HDFS = Gauge('hdfs', 'Total HDFS Usage in Userspace', labelnames=['user'], registry=registry)
+    UP = Gauge('nbresuse_up', 'Metrics Service is Up for User', labelnames=['user'], registry=registry)
 
 class MetricsHandler(IPythonHandler):
     def get(self):
@@ -97,6 +98,7 @@ class MetricsHandler(IPythonHandler):
         }
 
         if prometheus: # update prometheus registry and push to central location (for JupyterHub)
+            UP.labels(config.user).set(1)
             MEM.labels(config.user).set(rss)
             DISK.labels(config.user).set(disk_used)
             HDFS.labels(config.user).set(hdfs_used)
