@@ -102,7 +102,7 @@ class MetricsHandler(IPythonHandler):
             MEM.labels(config.user).set(rss)
             DISK.labels(config.user).set(disk_used)
             HDFS.labels(config.user).set(hdfs_used)
-            push_to_gateway(pushgateway, job='jupyter-notebook', registry=registry)
+            push_to_gateway(pushgateway, job='jupyter-notebook', registry=registry, grouping_key={'user':config.user})
         
         # return metrics in browser
         self.write(json.dumps(metrics))
