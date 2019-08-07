@@ -102,10 +102,14 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
         }
 
         $.getJSON(utils.get_body_data('baseUrl') + 'api/sessions', function(data) {
-            var notebook_name = decodeURI(window.location.pathname).split('/notebooks/')[1];
-            var session = data.filter((item) => {return item['path']===notebook_name});
-            var kernel = session[0]['kernel']['id'];
-            //now get the usage info for this kernel and total
+            var notebook_name = decodeURI(window.location.pathname).split('/notebooks/')[1].replace(/^\/+/, '');
+            var session = data.filter((item) => {return item['notebook']['path'].replace(/^\/+/, '')===notebook_name});
+            try {
+                var kernel = session[0]['kernel']['id'];
+            }
+            catch(err) {
+                console.log("could not find metrics for this notebook")
+            }            //now get the usage info for this kernel and total
             $.getJSON(utils.get_body_data('baseUrl') + 'metrics?kernel=' + kernel, function(data) {
                 // FIXME: Proper setups for MB and GB. MB should have 0 things
                 // after the ., but GB should have 2.
