@@ -95,108 +95,103 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
 
     }
 
-    var displayMetrics = function() {
+    var displayMetrics = () => {
         if (document.hidden) {
             // Don't poll when nobody is looking
             return;
         }
+        let kernel_obj = Jupyter.notebook.kernel;
+        let kernel = kernel_obj ? kernel_obj.id : null;
 
-        $.getJSON(utils.get_body_data('baseUrl') + 'api/sessions', function(data) {
-            var notebook_name = decodeURI(window.location.pathname).split('/notebooks/')[1].replace(/^\/+/, '');
-            var session = data.filter((item) => {return item['notebook']['path'].replace(/^\/+/, '')===notebook_name});
-            try {
-                var kernel = session[0]['kernel']['id'];
+        $.getJSON(utils.get_body_data('baseUrl') + 'metrics?kernel=' + kernel, function(data) {
+            // FIXME: Proper setups for MB and GB. MB should have 0 things
+            // after the ., but GB should have 2.
+            var display = (data['rss'] / (1024 * 1024 * 1024)).toFixed(2);
+            var display_notebook = (data['rss_this_one'] / (1024 * 1024 * 1024)).toFixed(2);
+            var display_disk = (data['disk'] / (1024 * 1024 * 1024)).toFixed(2);
+            var display_hdfs = (data['hdfs'] / (1024 * 1024 * 1024)).toFixed(2);
+            //var display_cpu = (data['cpu']).toFixed(2);
+            //var display_notebook_cpu = (data['cpu_this_one']).toFixed(2);
+
+            var limits = data['limits'];
+
+            // if ('cpu' in limits) {
+            //     if ('cpu' in limits['cpu']) {
+            //         display_cpu += " / " + (limits['cpu']['cpu']);
+            //     }
+            //     if (limits['cpu']['warn']) {
+            //         $('#nbresuse-display-cpu').addClass('nbresuse-warn');
+            //         $('#nbresuse-display-cpu i').removeClass('fa-grin-beam');
+            //         $('#nbresuse-display-cpu i').addClass('fa-angry');
+            //     } else {
+            //         $('#nbresuse-display-cpu').removeClass('nbresuse-warn');
+            //         $('#nbresuse-display-cpu i').removeClass('fa-angry');
+            //         $('#nbresuse-display-cpu i').addClass('fa-grin-beam');
+            //     }
+            // }
+
+            if ('memory' in limits) {
+                if ('rss' in limits['memory']) {
+                    display += " / " + (limits['memory']['rss'] / (1024 * 1024 * 1024));
+                }
+                if (limits['memory']['warn']) {
+                    $('#nbresuse-display').addClass('nbresuse-warn');
+                    $('#nbresuse-display i').removeClass('fa-grin-beam');
+                    $('#nbresuse-display i').addClass('fa-angry');
+                } else {
+                    $('#nbresuse-display').removeClass('nbresuse-warn');
+                    $('#nbresuse-display i').removeClass('fa-angry');
+                    $('#nbresuse-display i').addClass('fa-grin-beam');
+                }
             }
-            catch(err) {
-                console.log("could not find metrics for this notebook")
-            }            //now get the usage info for this kernel and total
-            $.getJSON(utils.get_body_data('baseUrl') + 'metrics?kernel=' + kernel, function(data) {
-                // FIXME: Proper setups for MB and GB. MB should have 0 things
-                // after the ., but GB should have 2.
-                var display = (data['rss'] / (1024 * 1024 * 1024)).toFixed(2);
-                var display_notebook = (data['rss_this_one'] / (1024 * 1024 * 1024)).toFixed(2);
-                var display_disk = (data['disk'] / (1024 * 1024 * 1024)).toFixed(2);
-                var display_hdfs = (data['hdfs'] / (1024 * 1024 * 1024)).toFixed(2);
-                //var display_cpu = (data['cpu']).toFixed(2);
-                //var display_notebook_cpu = (data['cpu_this_one']).toFixed(2);
-
-                var limits = data['limits'];
-
-                // if ('cpu' in limits) {
-                //     if ('cpu' in limits['cpu']) {
-                //         display_cpu += " / " + (limits['cpu']['cpu']);
-                //     }
-                //     if (limits['cpu']['warn']) {
-                //         $('#nbresuse-display-cpu').addClass('nbresuse-warn');
-                //         $('#nbresuse-display-cpu i').removeClass('fa-grin-beam');
-                //         $('#nbresuse-display-cpu i').addClass('fa-angry');
-                //     } else {
-                //         $('#nbresuse-display-cpu').removeClass('nbresuse-warn');
-                //         $('#nbresuse-display-cpu i').removeClass('fa-angry');
-                //         $('#nbresuse-display-cpu i').addClass('fa-grin-beam');
-                //     }
-                // }
-
-                if ('memory' in limits) {
-                    if ('rss' in limits['memory']) {
-                        display += " / " + (limits['memory']['rss'] / (1024 * 1024 * 1024));
-                    }
-                    if (limits['memory']['warn']) {
-                        $('#nbresuse-display').addClass('nbresuse-warn');
-                        $('#nbresuse-display i').removeClass('fa-grin-beam');
-                        $('#nbresuse-display i').addClass('fa-angry');
-                    } else {
-                        $('#nbresuse-display').removeClass('nbresuse-warn');
-                        $('#nbresuse-display i').removeClass('fa-angry');
-                        $('#nbresuse-display i').addClass('fa-grin-beam');
-                    }
+            if ('disk' in limits) {
+                if ('disk' in limits['disk']) {
+                    display_disk += " / " + (limits['disk']['disk'] / (1024 * 1024 * 1024));
                 }
-                if ('disk' in limits) {
-                    if ('disk' in limits['disk']) {
-                        display_disk += " / " + (limits['disk']['disk'] / (1024 * 1024 * 1024));
-                    }
-                    if (limits['disk']['warn']) {
-                        $('#nbresuse-display-disk').addClass('nbresuse-warn');
-                        $('#nbresuse-display-disk i').removeClass('fa-grin-beam');
-                        $('#nbresuse-display-disk i').addClass('fa-angry');
+                if (limits['disk']['warn']) {
+                    $('#nbresuse-display-disk').addClass('nbresuse-warn');
+                    $('#nbresuse-display-disk i').removeClass('fa-grin-beam');
+                    $('#nbresuse-display-disk i').addClass('fa-angry');
 
-                    } else {
-                        $('#nbresuse-display-disk').removeClass('nbresuse-warn');
-                        $('#nbresuse-display-disk i').removeClass('fa-angry');
-                        $('#nbresuse-display-disk i').addClass('fa-grin-beam');
-                    }
+                } else {
+                    $('#nbresuse-display-disk').removeClass('nbresuse-warn');
+                    $('#nbresuse-display-disk i').removeClass('fa-angry');
+                    $('#nbresuse-display-disk i').addClass('fa-grin-beam');
                 }
-                if ('hdfs' in limits) {
-                    if ('hdfs' in limits['hdfs']) {
-                        display_hdfs += " / " + (limits['hdfs']['hdfs'] / (1024 * 1024 * 1024));
-                    }
-                    if (limits['hdfs']['warn']) {
-                        $('#nbresuse-display-hdfs').addClass('nbresuse-warn');
-                        $('#nbresuse-display-hdfs i').removeClass('fa-grin-beam');
-                        $('#nbresuse-display-hdfs i').addClass('fa-angry');
+            }
+            if ('hdfs' in limits) {
+                if ('hdfs' in limits['hdfs']) {
+                    display_hdfs += " / " + (limits['hdfs']['hdfs'] / (1024 * 1024 * 1024));
+                }
+                if (limits['hdfs']['warn']) {
+                    $('#nbresuse-display-hdfs').addClass('nbresuse-warn');
+                    $('#nbresuse-display-hdfs i').removeClass('fa-grin-beam');
+                    $('#nbresuse-display-hdfs i').addClass('fa-angry');
 
-                    } else {
-                        $('#nbresuse-display-hdfs').removeClass('nbresuse-warn');
-                        $('#nbresuse-display-hdfs i').removeClass('fa-angry');
-                        $('#nbresuse-display-hdfs i').addClass('fa-grin-beam');
-                    }
+                } else {
+                    $('#nbresuse-display-hdfs').removeClass('nbresuse-warn');
+                    $('#nbresuse-display-hdfs i').removeClass('fa-angry');
+                    $('#nbresuse-display-hdfs i').addClass('fa-grin-beam');
                 }
-                //$('#nbresuse-cpu').text(display_cpu + '%');
-                //$('#nbresuse-cpu-notebook').text(display_notebook_cpu + ' %');
-                $('#nbresuse-mem').text(display + ' GB');
-                $('#nbresuse-mem-notebook').text(display_notebook + ' GB');
-                $('#nbresuse-disk').text(display_disk + ' GB');
-                $('#nbresuse-hdfs').text(display_hdfs + ' GB');
-            });
+            }
+            //$('#nbresuse-cpu').text(display_cpu + '%');
+            //$('#nbresuse-cpu-notebook').text(display_notebook_cpu + ' %');
+            $('#nbresuse-mem').text(display + ' GB');
+            $('#nbresuse-mem-notebook').text(display_notebook + ' GB');
+            $('#nbresuse-disk').text(display_disk + ' GB');
+            $('#nbresuse-hdfs').text(display_hdfs + ' GB');
         });
-
-    }
+    };
 
     var load_ipython_extension = function () {
         setupDOM();
+        let before = performance.now();
         displayMetrics();
-        // Update every five seconds, eh?
-        setInterval(displayMetrics, 1000 * 5);
+        let after = performance.now();
+        console.log(after-before)
+        // Update every five seconds, eh? Unless something wild is happening! Maybe disk size is really big? Then do it every five of the time it takes?
+        let interval = 1000 * Math.max(5, (after-before) * 5); 
+        setInterval(displayMetrics, interval);
 
         document.addEventListener("visibilitychange", function() {
             // Update instantly when user activates notebook tab
